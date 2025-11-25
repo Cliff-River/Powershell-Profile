@@ -1,11 +1,20 @@
 using namespace System.IO
 
+# -------------------------------
+# PATH setup: append custom script directory and Git's usr\bin
+# -------------------------------
 [string[]] $addingpaths = @( 
     ($HOME + "\scripts"),
     "C:\Program Files\Git\usr\bin"
 )
 $env:Path += ($env:Path[-1] -eq ";" ? "" : ";") + ($addingpaths -join ";")
 
+# -------------------------------
+# Course workspace navigation helper
+#   - $env:Course points to main course directory
+#   - Course <partialPath> tab-completes subdirectories/files
+#   - Use -Show to open in Explorer
+# -------------------------------
 $env:Course = "E:\Documents\Course"
 function Course {
     param (
@@ -17,7 +26,6 @@ function Course {
                 [System.Management.Automation.Language.CommandAst] $CommandAst,
                 [System.Collections.IDictionary] $FakeBoundParameters
             )
-            # $WordToComplete = $WordToComplete -replace "/", "\"
             $WordToComplete = $WordToComplete -replace "'", ""
             Get-ChildItem $env:Course "$WordToComplete*" | Select-Object -ExpandProperty FullName | 
                 ForEach-Object { 
@@ -46,6 +54,12 @@ function Course {
     }
 }
 
+# -------------------------------
+# EBook helper
+#   - $env:EBook points to ebook library
+#   - EBook <filename> opens in configured PDF reader
+#   - Tab completion for ebook names; -Show opens Explorer
+# -------------------------------
 $env:EBook = "E:\Documents\电子书"
 function EBook {
     param (
@@ -77,12 +91,18 @@ function EBook {
     }
 }
 
+# PDF reader and convenience aliases
 $env:EBook_Reader = "C:\Program Files (x86)\Foxit Software\Foxit PDF Reader\FoxitPDFReader.exe"
 New-Alias -Name foxit -Value $env:EBook_Reader
 New-Alias -Name BaiduNetDisk -Value "C:\Users\xys\AppData\Roaming\baidu\BaiduNetdisk\BaiduNetdisk.exe"
-
 New-Alias -Name HBuilderX -Value D:\Softwares\HBuilderX\HBuilderX.exe
 
+# -------------------------------
+# Conda helpers
+#   - Start-Conda [-Environment <name>] launches new shell and activates env
+#   - Invoke-Conda <args> forwards arbitrary conda commands in new shell
+#   - 'conda' alias mapped to Invoke-Conda
+# -------------------------------
 New-Variable -Name conda_path -Value "C:\Users\$env:USERNAME\miniconda3\shell\condabin\conda-hook.ps1" -Option ReadOnly -Scope Local
 function Start-Conda {
     param (
@@ -93,6 +113,7 @@ function Start-Conda {
      "& '$conda_path' ; conda activate $Environment "
 }
 
+# conda must run in legacy PowerShell to avoid issues with conda initialization
 function Invoke-Conda {
     $command = $args.length -gt 0 ? $args -join " " : "activate base"
     powershell -ExecutionPolicy ByPass -NoExit -Command `

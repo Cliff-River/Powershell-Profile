@@ -103,7 +103,7 @@ New-Alias -Name HBuilderX -Value D:\Softwares\HBuilderX\HBuilderX.exe
 #   - Invoke-Conda <args> forwards arbitrary conda commands in new shell
 #   - 'conda' alias mapped to Invoke-Conda
 # -------------------------------
-New-Variable -Name conda_path -Value "C:\Users\$env:USERNAME\miniconda3\shell\condabin\conda-hook.ps1" -Option ReadOnly -Scope Local
+New-Variable -Name conda_path -Value "$env:USERPROFILE\miniconda3\shell\condabin\conda-hook.ps1" -Option ReadOnly -Scope Local
 function Start-Conda {
     param (
         [string]$Environment = "base"

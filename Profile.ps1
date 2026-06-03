@@ -121,3 +121,21 @@ function Invoke-Conda {
 }
 
 New-Alias conda Invoke-Conda
+
+function Find-Files {
+    param (
+        [string]$Path = $env:Course,
+        [string]$Pattern = "*",
+        [int]$Depth = 5,
+        [switch]$Recurse
+    )
+    $basePath = (Resolve-Path $Path).Path
+    if ($Recurse) {
+        $result = Get-ChildItem $Path $Pattern -Recurse -File
+    } else {
+        $result = Get-ChildItem $Path $Pattern -Depth $Depth -File
+    }
+    $result | Select-Object *, @{ Name = 'RelativePath'; Expression = {
+        [Path]::GetRelativePath($basePath, $_.FullName)
+    } } | Format-Table -Property RelativePath, Length, LastWriteTime
+}

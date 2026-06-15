@@ -139,3 +139,8 @@ function Find-Files {
         [Path]::GetRelativePath($basePath, $_.FullName)
     } } | Format-Table -Property RelativePath, Length, LastWriteTime
 }
+
+# Somme Aliases
+New-Alias traecn "$env:LOCALAPPDATA\Programs\Trae CN\bin\trae-cn.cmd"
+New-Alias trae-cn traecn
+New-Alias trae traecn

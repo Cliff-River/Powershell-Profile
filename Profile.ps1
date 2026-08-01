@@ -143,4 +143,4 @@ function Find-Files {
 # Somme Aliases
 New-Alias traecn "$env:LOCALAPPDATA\Programs\Trae CN\bin\trae-cn.cmd"
 New-Alias trae-cn traecn
-New-Alias trae traecn
+New-Alias trc traecn

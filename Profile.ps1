@@ -144,3 +144,33 @@ function Find-Files {
 New-Alias traecn "$env:LOCALAPPDATA\Programs\Trae CN\bin\trae-cn.cmd"
 New-Alias trae-cn traecn
 New-Alias trc traecn
+
+# -------------------------------
+# Open Traecn with specifc profile
+# -------------------------------
+function Open-Traecn {
+    param (
+        [Parameter(Position = 0)]
+        [string]$Path,
+        [ArgumentCompleter({
+                param(
+                    [string] $CommandName,
+                    [string] $ParameterName,
+                    [string] $WordToComplete,
+                    [System.Management.Automation.Language.CommandAst] $CommandAst,
+                    [System.Collections.IDictionary] $FakeBoundParameters
+                )
+                $storage = "$env:APPDATA\Trae CN\User\globalStorage\storage.json"
+                $names = @("Default")
+                if (Test-Path $storage) {
+                    $names += (Get-Content $storage -Raw | ConvertFrom-Json).userDataProfiles |
+                    ForEach-Object { $_.name } | Where-Object { $_ }
+                }
+                $names | Where-Object { $_ -like "$WordToComplete*" } | ForEach-Object {
+                    $_ -match '\s' ? "'$_'" : $_
+                }
+            })]
+        [string]$ProfileName = "Default"
+    )
+    traecn --profile $ProfileName $Path
+}

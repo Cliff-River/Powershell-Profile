@@ -146,6 +146,19 @@ New-Alias trae-cn traecn
 New-Alias trc traecn
 
 # -------------------------------
+# Trae CN profile names (shared by Open-Traecn and command completion)
+# -------------------------------
+function Get-TraecnProfileName {
+    $storage = "$env:APPDATA\Trae CN\User\globalStorage\storage.json"
+    $names = @("Default")
+    if (Test-Path $storage) {
+        $names += (Get-Content $storage -Raw | ConvertFrom-Json).userDataProfiles |
+        ForEach-Object { $_.name } | Where-Object { $_ }
+    }
+    $names
+}
+
+# -------------------------------
 # Open Traecn with specifc profile
 # -------------------------------
 function Open-Traecn {
@@ -160,13 +173,7 @@ function Open-Traecn {
                     [System.Management.Automation.Language.CommandAst] $CommandAst,
                     [System.Collections.IDictionary] $FakeBoundParameters
                 )
-                $storage = "$env:APPDATA\Trae CN\User\globalStorage\storage.json"
-                $names = @("Default")
-                if (Test-Path $storage) {
-                    $names += (Get-Content $storage -Raw | ConvertFrom-Json).userDataProfiles |
-                    ForEach-Object { $_.name } | Where-Object { $_ }
-                }
-                $names | Where-Object { $_ -like "$WordToComplete*" } | ForEach-Object {
+                Get-TraecnProfileName | Where-Object { $_ -like "$WordToComplete*" } | ForEach-Object {
                     $_ -match '\s' ? "'$_'" : $_
                 }
             })]
@@ -174,3 +181,47 @@ function Open-Traecn {
     )
     traecn --profile $ProfileName $Path
 }
+
+# -------------------------------
+# Completion for the trae-cn CLI (traecn / trae-cn)
+#   - options: -/-- arguments
+#   - --profile <name>: registered user profiles
+#   - other arguments: file/directory paths
+# -------------------------------
+$traecnOptions = @(
+    '-d', '--diff', '-m', '--merge', '-a', '--add', '--remove', '-g', '--goto',
+    '-n', '--new-window', '-r', '--reuse-window', '-w', '--wait',
+    '--locale', '--user-data-dir', '--profile',
+    '--extensions-dir', '--list-extensions', '--show-versions', '--category',
+    '--install-extension', '--pre-release', '--uninstall-extension',
+    '--update-extensions', '--enable-proposed-api', '--add-mcp',
+    '--verbose', '--log', '-s', '--status', '--prof-startup',
+    '-h', '--help', '-v', '--version'
+)
+
+$traecnCompleter = {
+    param($wordToComplete, $commandAst, $cursorPosition)
+
+    # 取上一个 token，用于判断当前是否在补全某个选项的值
+    $elements = $commandAst.CommandElements
+    $index = if ($wordToComplete) { $elements.Count - 2 } else { $elements.Count - 1 }
+    $previous = if ($index -ge 1) { $elements[$index].Extent.Text } else { '' }
+
+    if ($previous -eq '--profile') {
+        Get-TraecnProfileName | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
+            $_ -match '\s' ? "'$_'" : $_
+        }
+        return
+    }
+
+    if ($wordToComplete -like '-*') {
+        $traecnOptions | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new(
+                $_, $_, [System.Management.Automation.CompletionResultType]::ParameterName, $_)
+        }
+        return
+    }
+
+    [System.Management.Automation.CompletionCompleters]::CompleteFilename($wordToComplete)
+}
+Register-ArgumentCompleter -CommandName traecn, trae-cn -Native -ScriptBlock $traecnCompleter
